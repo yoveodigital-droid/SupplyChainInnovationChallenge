@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Generated demo data and trained models (rebuilt by `make seed`)
+backend/data/
+
+# Node
+node_modules/
+frontend/dist/
+.vite/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,14 @@
+# PortPulse backend. Pinned so the demo is reproducible offline.
+fastapi==0.141.1
+uvicorn[standard]==0.52.0
+SQLAlchemy==2.0.51
+pydantic==2.13.4
+scikit-learn==1.9.0
+numpy==2.4.6
+pandas==3.0.5
+networkx==3.6.1
+joblib==1.5.3
+
+# Testing
+pytest==9.1.1
+httpx==0.28.1
