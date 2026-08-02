@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-paper text-ink font-sans antialiased;
+  }
+  /* Numbers in tables and chips must not jitter as the demo clock advances. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  ::selection {
+    background: theme("colors.accent.soft");
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line bg-paper-raised shadow-card;
+  }
+  .card-flush {
+    @apply rounded-2xl border border-line bg-paper-raised;
+  }
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.09em] text-ink-faint;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-full border border-line bg-paper-raised px-3.5 py-2
+           text-sm font-medium text-ink transition
+           hover:border-line-strong hover:bg-paper-sunken
+           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
+           disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-accent {
+    @apply border-transparent bg-accent text-white hover:bg-accent-deep hover:border-transparent;
+  }
+  .btn-danger {
+    @apply border-transparent bg-risk-red text-white hover:bg-[#9d1f1f] hover:border-transparent;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold tnum;
+  }
+  .hairline {
+    @apply border-t border-line;
+  }
+}
+
+@keyframes pp-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* Leaflet is loaded lazily and only when tiles are reachable; these keep it
+   from looking foreign if it ever appears. */
+.leaflet-container {
+  background: theme("colors.sea.DEFAULT");
+  font-family: inherit;
+}

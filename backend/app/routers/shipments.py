@@ -101,8 +101,13 @@ def list_shipments(
         if ctx.db.get(Persona, persona) is None:
             raise HTTPException(404, f"unknown persona {persona}")
         stmt = stmt.where(Shipment.persona_id == persona)
+    rows = list(ctx.db.execute(stmt).scalars())
+    ctx.forecaster.prewarm(
+        sorted({p for s in rows for lid in s.leg_ids for p in
+                (ctx.recommender.legs[lid].origin_id, ctx.recommender.legs[lid].dest_id)})
+    )
     out = []
-    for shipment in ctx.db.execute(stmt).scalars():
+    for shipment in rows:
         out.append(_shipment_out(ctx, shipment, _exposure(ctx, shipment)))
     # Riskiest first — a forwarder opens the list to triage, not to browse.
     out.sort(key=lambda s: (-s.risk_score, s.etd))

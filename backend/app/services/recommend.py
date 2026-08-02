@@ -347,6 +347,11 @@ class Recommender:
                 seen.add(key)
                 routes.append(route)
 
+        # One batched prediction for every port any candidate might touch.
+        self.engine.fc.prewarm(
+            sorted({p for route in routes for p in route_nodes(route)})
+        )
+
         # --- hold sets the reference point for every delta ---
         hold = self._evaluate(shipment, current_route, 0, "hold")
         if hold is None:

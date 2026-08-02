@@ -37,7 +37,6 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import date, timedelta
-from functools import lru_cache
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -132,9 +131,12 @@ def load_active_events(db: Session, as_of: date, lookback_days: int = 40) -> lis
     ]
 
 
-@lru_cache(maxsize=8)
-def _exposure_cache_key(_version: int) -> None:  # pragma: no cover - cache token
-    return None
+_TOPOLOGY: dict[str, object] = {}
+
+
+def clear_topology_cache() -> None:
+    """Called after a reseed, when the leg graph itself may have changed."""
+    _TOPOLOGY.clear()
 
 
 OUTBOUND_WEIGHT = 0.4
@@ -143,8 +145,12 @@ OUTBOUND_WEIGHT = 0.4
 def chokepoint_exposure(db: Session) -> dict[str, dict[str, float]]:
     """``{chokepoint_id: {port_id: weighted share of its services transiting it}}``.
 
-    Arrivals count fully, departures at ``OUTBOUND_WEIGHT``.
+    Arrivals count fully, departures at ``OUTBOUND_WEIGHT``. The leg graph is
+    static between reseeds, so the result is memoised.
     """
+    hit = _TOPOLOGY.get("exposure")
+    if hit is not None:
+        return hit  # type: ignore[return-value]
     legs = db.execute(select(Leg).where(Leg.mode == "sea")).scalars().all()
     touching: dict[str, list[tuple[Leg, float]]] = {}
     for leg in legs:
@@ -160,18 +166,24 @@ def chokepoint_exposure(db: Session) -> dict[str, dict[str, float]]:
         for leg, w in weighted:
             for cp in leg.chokepoints or []:
                 sums[cp] = sums.get(cp, 0.0) + w
-        for cp, hit in sums.items():
-            exposure.setdefault(cp, {})[port_id] = round(hit / total, 4)
+        for cp, share in sums.items():
+            exposure.setdefault(cp, {})[port_id] = round(share / total, 4)
+    _TOPOLOGY["exposure"] = exposure
     return exposure
 
 
 def downstream_neighbours(db: Session) -> dict[str, list[str]]:
+    hit = _TOPOLOGY.get("neighbours")
+    if hit is not None:
+        return hit  # type: ignore[return-value]
     legs = db.execute(select(Leg)).scalars().all()
     out: dict[str, list[str]] = {}
     for leg in legs:
         out.setdefault(leg.origin_id, []).append(leg.dest_id)
         out.setdefault(leg.dest_id, []).append(leg.origin_id)
-    return {k: sorted(set(v)) for k, v in out.items()}
+    result = {k: sorted(set(v)) for k, v in out.items()}
+    _TOPOLOGY["neighbours"] = result
+    return result
 
 
 class EventOverlay:

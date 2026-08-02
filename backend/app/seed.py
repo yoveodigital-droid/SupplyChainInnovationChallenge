@@ -24,7 +24,7 @@ from functools import lru_cache
 import numpy as np
 from sqlalchemy.orm import Session
 
-from .config import HISTORY_DAYS, RANDOM_SEED, SEED_TODAY
+from .config import HISTORY_DAYS, MODEL_DIR, RANDOM_SEED, SEED_TODAY
 from .db import engine, session_scope
 from .models import (
     Base,
@@ -424,6 +424,10 @@ def ensure_seeded(force: bool = False) -> bool:
     """
     if force:
         Base.metadata.drop_all(engine)
+        # A rebuilt world invalidates the trained model and every derived cache.
+        model_path = MODEL_DIR / "forecaster.joblib"
+        model_path.unlink(missing_ok=True)
+        build_series.cache_clear()
     Base.metadata.create_all(engine)
     with session_scope() as db:
         already = db.query(Port).count() > 0

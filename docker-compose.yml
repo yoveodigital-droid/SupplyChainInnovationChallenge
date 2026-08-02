@@ -1,0 +1,31 @@
+# PortPulse demo — `docker compose up` and open http://localhost:8080
+#
+# The backend image seeds its database and trains the forecaster during the
+# build, so nothing here touches the network at run time.
+
+services:
+  api:
+    build: ./backend
+    volumes:
+      - portpulse-data:/data
+    environment:
+      PORTPULSE_DATA_DIR: /data
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  web:
+    build: ./frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+volumes:
+  portpulse-data:

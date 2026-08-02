@@ -50,6 +50,7 @@ def port_status(ctx: Context, port: Port) -> PortStatusOut:
 @router.get("/ports", response_model=list[PortStatusOut])
 def list_ports(ctx: Context = Depends(get_context)) -> list[PortStatusOut]:
     ports = ctx.db.execute(select(Port).order_by(Port.name)).scalars().all()
+    ctx.forecaster.prewarm([p.id for p in ports])
     return [port_status(ctx, p) for p in ports]
 
 

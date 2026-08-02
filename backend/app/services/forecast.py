@@ -27,6 +27,7 @@ and nothing downstream changes.
 from __future__ import annotations
 
 import math
+import threading
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
@@ -38,12 +39,12 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..config import MAX_HORIZON_DAYS, MODEL_DIR, RANDOM_SEED
+from ..config import MAX_HORIZON_DAYS, MODEL_DIR, RANDOM_SEED, SEED_TODAY
 from ..models import Port, PortDaily
 from .events import EventOverlay
 
 MODEL_PATH = Path(MODEL_DIR) / "forecaster.joblib"
-MODEL_VERSION = 4
+MODEL_VERSION = 5
 
 # Horizons sampled during training. Horizon is a model feature, so any value in
 # 1..MAX_HORIZON_DAYS can still be predicted.
@@ -130,7 +131,12 @@ FEATURE_COLUMNS = ORIGIN_FEATURES + STATIC_FEATURES + TARGET_FEATURES
 # --------------------------------------------------------------------------- #
 
 
-def load_observations(db: Session, seeded_only: bool = False) -> pd.DataFrame:
+def load_observations(
+    db: Session,
+    seeded_only: bool = False,
+    since: date | None = None,
+    until: date | None = None,
+) -> pd.DataFrame:
     stmt = select(
         PortDaily.port_id,
         PortDaily.day,
@@ -140,7 +146,14 @@ def load_observations(db: Session, seeded_only: bool = False) -> pd.DataFrame:
         PortDaily.vessel_arrivals,
     )
     if seeded_only:
-        stmt = stmt.where(PortDaily.scenario.is_(False))
+        # Training is pinned to the seed window: the model must be identical
+        # however far the presenter has advanced the demo clock, and it must
+        # never learn from days the scenario has already touched.
+        stmt = stmt.where(PortDaily.scenario.is_(False), PortDaily.day <= SEED_TODAY)
+    if since is not None:
+        stmt = stmt.where(PortDaily.day >= since)
+    if until is not None:
+        stmt = stmt.where(PortDaily.day <= until)
     rows = db.execute(stmt).all()
     frame = pd.DataFrame(rows, columns=["port_id", "day", "congestion", "waiting", "weather", "arrivals"])
     frame["day"] = pd.to_datetime(frame["day"])
@@ -230,6 +243,10 @@ def build_training_table(frame: pd.DataFrame, static: pd.DataFrame) -> pd.DataFr
 @dataclass
 class ForecastBundle:
     version: int
+    # Signature of the data the model was fitted on. A cached model whose
+    # signature no longer matches the database is silently wrong — it happens
+    # whenever the demo clock has moved since training — so it is rejected.
+    signature: tuple
     models: dict[str, HistGradientBoostingRegressor]
     port_codes: dict[str, int]
     feature_medians: dict[str, float]
@@ -254,6 +271,17 @@ def _make_model(loss: str, quantile: float | None = None) -> HistGradientBoostin
     if quantile is not None:
         kwargs["quantile"] = quantile
     return HistGradientBoostingRegressor(**kwargs)
+
+
+def training_signature(db: Session) -> tuple:
+    from sqlalchemy import func
+
+    rows, last_day = db.execute(
+        select(func.count(PortDaily.id), func.max(PortDaily.day)).where(
+            PortDaily.scenario.is_(False), PortDaily.day <= SEED_TODAY
+        )
+    ).one()
+    return (int(rows or 0), str(last_day))
 
 
 def train(db: Session) -> ForecastBundle:
@@ -291,6 +319,7 @@ def train(db: Session) -> ForecastBundle:
     congestion_std = frame.groupby("port_id")["congestion"].std().to_dict()
     bundle = ForecastBundle(
         version=MODEL_VERSION,
+        signature=training_signature(db),
         models=models,
         port_codes=_port_codes(static["port_id"].tolist()),
         feature_medians={c: float(table[c].median()) for c in FEATURE_COLUMNS},
@@ -304,6 +333,7 @@ def train(db: Session) -> ForecastBundle:
 
 
 _BUNDLE: ForecastBundle | None = None
+_BUNDLE_LOCK = threading.Lock()
 
 
 def get_bundle(db: Session, force_retrain: bool = False) -> ForecastBundle:
@@ -311,10 +341,21 @@ def get_bundle(db: Session, force_retrain: bool = False) -> ForecastBundle:
     global _BUNDLE
     if _BUNDLE is not None and not force_retrain:
         return _BUNDLE
+    with _BUNDLE_LOCK:
+        return _load_or_train(db, force_retrain)
+
+
+def _load_or_train(db: Session, force_retrain: bool) -> ForecastBundle:
+    global _BUNDLE
+    if _BUNDLE is not None and not force_retrain:
+        return _BUNDLE
     if MODEL_PATH.exists() and not force_retrain:
         try:
             bundle = joblib.load(MODEL_PATH)
-            if getattr(bundle, "version", None) == MODEL_VERSION:
+            if (
+                getattr(bundle, "version", None) == MODEL_VERSION
+                and getattr(bundle, "signature", None) == training_signature(db)
+            ):
                 _BUNDLE = bundle
                 return bundle
         except Exception:  # pragma: no cover - corrupt cache, just retrain
@@ -359,6 +400,32 @@ class Contribution:
     direction: str
 
 
+@dataclass
+class _Snapshot:
+    """Everything derived from the observation table for one simulated day.
+
+    Rebuilding this per request cost ~1.5s, which is far too slow for a live
+    demo where a persona switch fires several calls at once. It only changes
+    when the clock moves or the scenario fires, and ``data_version`` tracks
+    exactly that, so it is cached process-wide.
+    """
+
+    frame: pd.DataFrame
+    origin: pd.DataFrame
+    static: pd.DataFrame
+    arrival_profile: dict
+
+
+_SNAPSHOTS: dict[tuple[date, int], _Snapshot] = {}
+_SNAPSHOT_LIMIT = 4
+_SNAPSHOT_LOCK = threading.Lock()
+
+# Inference only needs enough history to fill the longest lag (27 days), the
+# longest rolling window (28 days) and the 8-week arrival profile. Feeding it
+# all 18 months made every request re-derive features it would throw away.
+INFERENCE_WINDOW_DAYS = 70
+
+
 class PortForecaster:
     """Bound to one snapshot of observations; caches per-port forecasts."""
 
@@ -374,15 +441,45 @@ class PortForecaster:
         self.data_version = data_version
         self.overlay = overlay if overlay is not None else EventOverlay(db, as_of)
         self.bundle = get_bundle(db)
-        frame = load_observations(db)
-        frame = frame[frame["day"] <= pd.Timestamp(as_of)]
-        self.frame = frame
-        self._origin = build_origin_features(frame)
-        self._origin = self._origin[self._origin["day"] == pd.Timestamp(as_of)].set_index("port_id")
-        static = load_port_static(db)
-        self._static = static.set_index("port_id")
-        self._arrival_profile = self._build_arrival_profile(frame)
-        self._cache: dict[tuple[str, int], list[ForecastPoint]] = {}
+        snapshot = self._snapshot(db, as_of, data_version)
+        self.frame = snapshot.frame
+        self._origin = snapshot.origin
+        self._static = snapshot.static
+        self._arrival_profile = snapshot.arrival_profile
+        # Full 1..MAX_HORIZON forecast per port; shorter horizons are slices.
+        self._full: dict[str, list[ForecastPoint]] = {}
+
+    @classmethod
+    def _snapshot(cls, db: Session, as_of: date, data_version: int) -> _Snapshot:
+        """Build (or reuse) the derived-feature snapshot for one simulated day.
+
+        Serialised behind a lock: every demo action mints a new data_version and
+        the UI immediately fires several requests at once. Without the lock they
+        all miss the cache together and each rebuilds the same frame, which is
+        how a 200 ms action turned into an eight-second stall.
+        """
+        key = (as_of, data_version)
+        cached = _SNAPSHOTS.get(key)
+        if cached is not None:
+            return cached
+        with _SNAPSHOT_LOCK:
+            cached = _SNAPSHOTS.get(key)
+            if cached is not None:
+                return cached
+            start = as_of - timedelta(days=INFERENCE_WINDOW_DAYS)
+            frame = load_observations(db, since=start, until=as_of)
+            origin = build_origin_features(frame)
+            origin = origin[origin["day"] == pd.Timestamp(as_of)].set_index("port_id")
+            snapshot = _Snapshot(
+                frame=frame,
+                origin=origin,
+                static=load_port_static(db).set_index("port_id"),
+                arrival_profile=cls._build_arrival_profile(frame),
+            )
+            while len(_SNAPSHOTS) >= _SNAPSHOT_LIMIT:
+                _SNAPSHOTS.pop(next(iter(_SNAPSHOTS)))
+            _SNAPSHOTS[key] = snapshot
+            return snapshot
 
     # -- arrivals: seasonal-naive weekday profile, nudged by forecast congestion.
     @staticmethod
@@ -422,27 +519,72 @@ class PortForecaster:
         std = max(self.bundle.port_congestion_std.get(port_id, 8.0), 1.0)
         sharpness = max(0.0, 1.0 - width / (3.2 * std))
         horizon_term = math.exp(-horizon / 34.0)
-        port_days = self.frame[self.frame["port_id"] == port_id]["day"]
-        gap = (pd.Timestamp(self.as_of) - port_days.max()).days if len(port_days) else 30
+        gap = 0 if port_id in self._origin.index else 30
         recency = max(0.0, 1.0 - gap / 14.0)
         score = 0.55 * sharpness + 0.30 * horizon_term + 0.15 * recency
         return round(float(min(max(score, 0.05), 0.98)), 3)
 
+    def prewarm(self, port_ids: list[str]) -> None:
+        """Predict every requested port in one batch.
+
+        Model inference is dominated by per-call overhead, not by arithmetic:
+        28 ports × 21 horizons × 6 models issued one at a time is thousands of
+        tiny predicts. Issuing six predicts over one tall matrix instead turns a
+        one-second endpoint into a few tens of milliseconds.
+        """
+        wanted = [p for p in port_ids if p in self._origin.index and p not in self._full]
+        if not wanted:
+            return
+        horizons = list(range(1, MAX_HORIZON_DAYS + 1))
+        blocks = [self._feature_matrix(port_id, horizons) for port_id in wanted]
+        x = np.concatenate(blocks, axis=0)
+        m = self.bundle.models
+        preds = {
+            name: m[name].predict(x)
+            for name in (
+                "congestion_p50", "congestion_p10", "congestion_p90",
+                "waiting_p50", "waiting_p10", "waiting_p90",
+            )
+        }
+        span = len(horizons)
+        for i, port_id in enumerate(wanted):
+            sl = slice(i * span, (i + 1) * span)
+            self._full[port_id] = self._assemble(
+                port_id,
+                horizons,
+                {name: values[sl] for name, values in preds.items()},
+            )
+
     def forecast(self, port_id: str, horizon: int = MAX_HORIZON_DAYS) -> list[ForecastPoint]:
         horizon = int(max(1, min(horizon, MAX_HORIZON_DAYS)))
-        key = (port_id, horizon)
-        if key in self._cache:
-            return self._cache[key]
+        if port_id not in self._full:
+            self.prewarm([port_id])
+        cached = self._full.get(port_id)
+        if cached is not None:
+            return cached[:horizon]
 
         horizons = list(range(1, horizon + 1))
         x = self._feature_matrix(port_id, horizons)
         m = self.bundle.models
-        c50 = m["congestion_p50"].predict(x)
-        c10 = m["congestion_p10"].predict(x)
-        c90 = m["congestion_p90"].predict(x)
-        w50 = m["waiting_p50"].predict(x)
-        w10 = m["waiting_p10"].predict(x)
-        w90 = m["waiting_p90"].predict(x)
+        return self._assemble(
+            port_id,
+            horizons,
+            {
+                "congestion_p50": m["congestion_p50"].predict(x),
+                "congestion_p10": m["congestion_p10"].predict(x),
+                "congestion_p90": m["congestion_p90"].predict(x),
+                "waiting_p50": m["waiting_p50"].predict(x),
+                "waiting_p10": m["waiting_p10"].predict(x),
+                "waiting_p90": m["waiting_p90"].predict(x),
+            },
+        )
+
+    def _assemble(
+        self, port_id: str, horizons: list[int], preds: dict
+    ) -> list[ForecastPoint]:
+        """Turn raw model output into forecast points with intervals and overlay."""
+        c50, c10, c90 = preds["congestion_p50"], preds["congestion_p10"], preds["congestion_p90"]
+        w50, w10, w90 = preds["waiting_p50"], preds["waiting_p10"], preds["waiting_p90"]
 
         # Quantile models are fit independently; enforce ordering.
         c10, c90 = np.minimum(c10, c50), np.maximum(c90, c50)
@@ -494,7 +636,6 @@ class PortForecaster:
                     event_drivers=[{"headline": hl, "points": pts} for hl, pts in impact.drivers],
                 )
             )
-        self._cache[key] = points
         return points
 
     def point(self, port_id: str, day: date) -> ForecastPoint:
@@ -576,6 +717,11 @@ class PortForecaster:
             for headline, points in self.overlay.congestion_uplift(port_id, day).drivers
         ]
         return event_terms + ranked
+
+
+def clear_forecast_snapshots() -> None:
+    """Drop cached observation snapshots (used after a reseed)."""
+    _SNAPSHOTS.clear()
 
 
 def _normal_cdf(z: float) -> float:
