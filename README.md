@@ -46,9 +46,26 @@ Other useful targets:
 ```bash
 make test         # 103 pytest cases + frontend smoke tests
 make demo-check   # replay the scripted demo against the running API
+make preview      # build the shareable staging preview (see below)
 make reseed       # rebuild the world and retrain from scratch
 make clean        # delete generated data, model and build output
 ```
+
+### Shareable staging preview
+
+`make preview` produces `preview/portpulse-preview.html`: one self-contained
+file that runs the real UI with no backend, no build step and no network.
+
+It is not a mock. `scripts/record_preview.py` drives a live API through every
+step of the scripted demo and records each response; `frontend/src/api/fixtures.ts`
+replays them behind the same client the app always uses, so the persona
+switcher, the demo clock and accepting a recommendation all work. Only the
+recommended option at each recorded step is captured — other options are
+disabled rather than allowed to fail. A banner says all of this on screen.
+
+Useful for sending the prototype to reviewers who will not clone a repository.
+Regenerate it whenever the model or the seed changes; it is a snapshot, and
+`.gitignore` keeps it out of version control.
 
 ---
 

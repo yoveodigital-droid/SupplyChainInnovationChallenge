@@ -1,4 +1,6 @@
 import { DemoBar } from "./components/DemoBar";
+import { PreviewBanner } from "./components/PreviewBanner";
+import { isPreview } from "./api/fixtures";
 import { ActivityBar } from "./components/primitives";
 import { DashboardView } from "./views/DashboardView";
 import { PhoneView } from "./views/PhoneView";
@@ -66,6 +68,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
+      {isPreview() && <PreviewBanner />}
+
       <header className="sticky top-0 z-30 border-b border-line bg-paper/85 backdrop-blur">
         <ActivityBar active={busy} />
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-4 px-4 py-3 sm:px-6">

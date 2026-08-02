@@ -79,11 +79,17 @@ test-backend: ## Run only the pytest suite
 build: ## Type-check and build the production frontend bundle
 	cd $(FRONTEND) && npm run build
 
+.PHONY: preview
+preview: ## Record the API and build the self-contained hosted preview
+	$(PY) scripts/record_preview.py
+	cd $(FRONTEND) && node scripts/build-preview.mjs
+	@echo "Open preview/portpulse-preview.html or publish it as an artifact."
+
 .PHONY: demo-check
 demo-check: ## Replay the scripted §7 demo against a running API and print each beat
 	$(PY) scripts/demo_check.py
 
 .PHONY: clean
 clean: ## Remove the generated database, trained model and build output
-	rm -rf $(BACKEND)/data $(FRONTEND)/dist
+	rm -rf $(BACKEND)/data $(FRONTEND)/dist $(FRONTEND)/dist-preview preview
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

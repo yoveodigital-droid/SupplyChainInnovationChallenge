@@ -1,3 +1,4 @@
+import { fixturesActive, serveFromFixtures } from "./fixtures";
 import type {
   AcceptResult,
   Alert,
@@ -27,6 +28,12 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  // The hosted preview has no backend to call; it replays a recording instead.
+  if (fixturesActive()) {
+    const method = init?.method ?? "GET";
+    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    return (await serveFromFixtures(path, method, body)) as T;
+  }
   const response = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json" },
     ...init,

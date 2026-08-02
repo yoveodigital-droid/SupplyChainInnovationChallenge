@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "../api/client";
+import { canAcceptInPreview } from "../api/fixtures";
 import type { Alert, ChatMessage, Chip, Option, Persona, Shipment } from "../api/types";
 import { Card, ConfidenceMeter, Refreshing, RiskBadge, Skeleton } from "../components/primitives";
 import { MapPanel } from "../components/MapPanel";
@@ -23,12 +24,14 @@ function Bubble({
   onChoose,
   chosen,
   busy,
+  shipmentId,
 }: {
   message: ChatMessage;
   index: number;
   onChoose?: (optionId: string) => void;
   chosen?: string | null;
   busy?: boolean;
+  shipmentId?: string;
 }) {
   const mine = message.sender === "user";
   const isOption = message.kind === "option";
@@ -84,7 +87,14 @@ function Bubble({
         {isOption && onChoose && message.option_id && (
           <button
             type="button"
-            disabled={busy || !!chosen}
+            disabled={
+              busy || !!chosen || !canAcceptInPreview(shipmentId ?? "", message.option_id)
+            }
+            title={
+              canAcceptInPreview(shipmentId ?? "", message.option_id)
+                ? undefined
+                : "Only the recommended option was recorded for this preview"
+            }
             onClick={() => onChoose(message.option_id!)}
             className="mt-2.5 w-full rounded-lg bg-accent px-3 py-1.5 text-[12px] font-semibold text-white
                        transition hover:bg-accent-deep disabled:opacity-40"
@@ -179,8 +189,16 @@ export function PhoneView({ persona }: { persona: Persona }) {
     [shipment?.id, version],
   );
 
-  // A new world state restarts the conversation from the alert.
+  // Accepting an option refreshes the world, which would otherwise trip the
+  // reset below and wipe the confirmation the user just received.
+  const selfInflicted = useRef(false);
+
+  // Any *other* change of world state restarts the conversation from the alert.
   useEffect(() => {
+    if (selfInflicted.current) {
+      selfInflicted.current = false;
+      return;
+    }
     setRevealed(1);
     setChosen(null);
     setConfirmation(null);
@@ -200,6 +218,7 @@ export function PhoneView({ persona }: { persona: Persona }) {
       const result = await api.accept(shipment.id, optionId, lang);
       setChosen(optionId);
       setConfirmation(result.message);
+      selfInflicted.current = true;
       refresh();
     } finally {
       setBusy(false);
@@ -313,6 +332,7 @@ export function PhoneView({ persona }: { persona: Persona }) {
               index={i}
               chosen={chosen}
               busy={busy}
+              shipmentId={shipment.id}
               onChoose={message.kind === "option" ? chooseOption : undefined}
             />
           ))}

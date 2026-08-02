@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { api } from "../api/client";
+import { canAcceptInPreview } from "../api/fixtures";
 import type { Option, Persona, Shipment } from "../api/types";
 import type { MapRoute } from "../components/CorridorMap";
 import { DelayDistributionChart, SpoilageGauge } from "../components/charts";
@@ -70,11 +71,13 @@ function OptionsTable({
   objective,
   onAccept,
   busy,
+  shipmentId,
 }: {
   options: Option[];
   objective: string;
   onAccept: (id: string) => void;
   busy: boolean;
+  shipmentId: string;
 }) {
   const columns: { key: keyof Option; head: string; render: (o: Option) => string; good: (o: Option) => boolean }[] = [
     {
@@ -173,7 +176,12 @@ function OptionsTable({
                   {o.kind !== "hold" && (
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={busy || !canAcceptInPreview(shipmentId, o.id)}
+                      title={
+                        canAcceptInPreview(shipmentId, o.id)
+                          ? undefined
+                          : "Only the recommended option was recorded for this preview"
+                      }
                       onClick={() => onAccept(o.id)}
                       className={`btn px-2.5 py-1 text-[11.5px] ${o.recommended ? "btn-accent" : ""}`}
                     >
@@ -453,6 +461,7 @@ export function DashboardView({ persona }: { persona: Persona }) {
                 objective={recs.data.objective}
                 onAccept={accept}
                 busy={busy}
+                shipmentId={selected.id}
               />
               </Refreshing>
             ) : (

@@ -11,9 +11,17 @@ backend/data/
 # Node
 node_modules/
 frontend/dist/
+frontend/dist-preview/
 .vite/
+
+# Recorded preview bundle and its build output (regenerate with `make preview`)
+frontend/src/preview-fixtures.json
+preview/
 
 # Editors / OS
 .DS_Store
 .idea/
 .vscode/
+
+# TypeScript incremental build info
+*.tsbuildinfo
