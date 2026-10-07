@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Request a Quote</title>
+<meta name="description" content="Request a quote or site survey from Access Network Business.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Caveat:wght@600&family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Access Network home">
+      <svg viewBox="0 0 56 40" aria-hidden="true"><polygon class="mk-n" points="30,40 30,0 38,0 48,23 48,0 56,0 56,40 48,40 38,17 38,40"/><path class="mk-a" fill-rule="evenodd" d="M0 40 13 0h10l13 40h-9l-2.5-8h-13L9 40zM14 25h8l-4-13z"/></svg>
+      <span class="brand-name"><b>Access Network</b><small>For business</small></span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <nav class="nav" id="site-nav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="connectivity.html">Connectivity</a>
+      <a href="enterprise-it.html">Enterprise IT</a>
+      <a href="projects.html">Fiber & Solar</a>
+      <a href="quote.html" class="btn" aria-current="page">Get a quote</a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+<section class="page-hero">
+  <svg class="strands" viewBox="0 0 420 480" aria-hidden="true">
+    <path class="strand s-soft" stroke-width="22" d="M150 -20 C 40 140, 50 320, 190 500"/>
+    <path class="strand s-blue" stroke-width="40" d="M210 -20 C 100 140, 110 320, 250 500"/>
+    <path class="strand s-ink" stroke-width="30" d="M262 -20 C 152 140, 162 320, 302 500"/>
+    <path class="strand s-blue" stroke-width="34" d="M312 -20 C 202 140, 212 320, 352 500"/>
+  </svg>
+  <div class="wrap">
+    <p class="crumbs"><a href="index.html">Home</a> / Get a quote</p>
+    <h1 class="display h-xl">Request a <span class="blue">quote</span></h1>
+    <p class="lede">Tell us about your site and what you need. Business Development will contact you to arrange a site survey.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap contact-grid">
+    <div class="stack-lg" id="contact">
+      <div class="stack">
+        <p class="eyebrow">Business sales</p>
+        <h2 class="display h-md">Prefer to call?</h2>
+      </div>
+      <ul class="contact-list">
+        <li><span class="k">Phone</span><span class="v"><span id="c-phone">+63 932 861 0817</span><button class="copy" type="button" data-copy="c-phone">Copy</button></span></li>
+        <li><span class="k">Email</span><span class="v"><span id="c-email">accessnetworkbusdev@gmail.com</span><button class="copy" type="button" data-copy="c-email">Copy</button></span></li>
+        <li><span class="k">Facebook</span><span class="v"><a href="https://www.facebook.com/accessnetworkinternet" rel="noopener">accessnetworkinternet</a></span></li>
+        <li><span class="k">Office hours</span><span class="v"><span class="sample">Placeholder: hours to confirm</span></span></li>
+        <li><span class="k">Time now in Nueva Ecija</span><span class="v mono"><span class="clock" data-tz="Asia/Manila">PHT, UTC+8</span></span></li>
+      </ul>
+      <div class="stack">
+        <h3 class="h-sm">What happens next</h3>
+        <ol class="timeline">
+          <li><span class="when">STEP 1</span><span class="what">We review your request</span><span class="who">and call to clarify anything missing</span></li>
+          <li><span class="when">STEP 2</span><span class="what">Site survey</span><span class="who">at a time that suits your operations</span></li>
+          <li><span class="when">STEP 3</span><span class="what">Proposal</span><span class="who">with design, materials and scope of work</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <form class="enquiry" novalidate>
+      <div class="form-step">
+        <h3><span>01</span> Your organization</h3>
+        <div class="field-row">
+          <div class="field"><label for="q-name">Contact person</label><input id="q-name" name="name" autocomplete="name" required value="Maria Santos"></div>
+          <div class="field"><label for="q-role">Position</label><input id="q-role" name="role" autocomplete="organization-title" value="Operations Manager"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="q-org">Company or office</label><input id="q-org" name="org" autocomplete="organization" required value="Sample Rice Mill Corp."></div>
+          <div class="field">
+            <label for="q-type">Type</label>
+            <select id="q-type" name="type">
+              <option selected>Business / enterprise</option><option>Cooperative</option><option>School or training center</option><option>Clinic or health unit</option><option>Local government unit</option><option>Resort or hotel</option><option>Contractor or developer</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label for="q-email">Email</label><input id="q-email" name="email" type="email" autocomplete="email" required value="maria@example.ph"></div>
+          <div class="field"><label for="q-phone">Mobile</label><input id="q-phone" name="phone" type="tel" autocomplete="tel" value="+63 917 000 0000"></div>
+        </div>
+      </div>
+
+      <div class="form-step">
+        <h3><span>02</span> Your site</h3>
+        <div class="field-row">
+          <div class="field">
+            <label for="q-town">Town or city</label>
+            <select id="q-town" name="town">
+              <option>Carranglan</option><option>Llanera</option><option>Pantabangan</option><option>Rizal</option><option selected>San Jose City</option><option>Other town in Nueva Ecija</option><option>Outside Nueva Ecija</option>
+            </select>
+          </div>
+          <div class="field"><label for="q-sites">Number of sites</label><input id="q-sites" name="sites" type="number" min="1" value="2"></div>
+        </div>
+        <div class="field"><label for="q-addr">Barangay, street or landmark</label><input id="q-addr" name="address" value="Brgy. Sample, beside the national highway"></div>
+      </div>
+
+      <div class="form-step">
+        <h3><span>03</span> What you need</h3>
+        <fieldset class="field">
+          <legend>Services</legend>
+          <div class="checks">
+            <label><input type="checkbox" id="q-s1" name="svc" value="internet" checked> Business internet</label>
+            <label><input type="checkbox" id="q-s2" name="svc" value="fiber"> Private fiber link</label>
+            <label><input type="checkbox" id="q-s3" name="svc" value="cctv" checked> CCTV / IP cameras</label>
+            <label><input type="checkbox" id="q-s4" name="svc" value="si"> System integration</label>
+            <label><input type="checkbox" id="q-s5" name="svc" value="coloc"> Colocation / DRC</label>
+            <label><input type="checkbox" id="q-s6" name="svc" value="support"> IT support</label>
+            <label><input type="checkbox" id="q-s7" name="svc" value="solar" checked> Solar</label>
+            <label><input type="checkbox" id="q-s8" name="svc" value="training"> Training</label>
+            <label><input type="checkbox" id="q-s9" name="svc" value="tv"> Cable TV</label>
+          </div>
+        </fieldset>
+        <div class="field-row">
+          <div class="field">
+            <label for="q-users">People or devices online</label>
+            <select id="q-users" name="users">
+              <option>1&ndash;10</option><option selected>11&ndash;50</option><option>51&ndash;200</option><option>More than 200</option><option>Not sure</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="q-when">Needed by</label>
+            <select id="q-when" name="when">
+              <option>As soon as possible</option><option selected>Within 3 months</option><option>Within 6 months</option><option>Planning / budgeting stage</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label for="q-msg">Project details</label><textarea id="q-msg" name="message">Main mill and warehouse about 1 km apart. We need internet at both, cameras around the compound, and backup power because of brownouts.</textarea></div>
+      </div>
+
+      <label class="consent" for="q-consent"><input type="checkbox" id="q-consent" name="consent" required> I agree that Access Network may use these details to prepare a quote, in line with the Data Privacy Act of 2012.</label>
+      <div class="btn-row"><button class="btn" type="submit">Send request <span class="arr" aria-hidden="true">&rarr;</span></button></div>
+      <p class="form-note" tabindex="-1" hidden></p>
+      <p class="note">Example details are pre-filled to show the form.</p>
+    </form>
+  </div>
+</section>
+
+<section class="section tint">
+  <div class="wrap split">
+    <div class="stack">
+      <p class="eyebrow">Questions</p>
+      <h2 class="display h-md">Before you ask</h2>
+    </div>
+    <div class="faq">
+      <details open><summary>Which areas do you cover?</summary><p>Our core network serves San Jose City, Rizal, Llanera, Carranglan and Pantabangan. Fiber, IT, CCTV and solar projects elsewhere in Nueva Ecija are scoped site by site.</p></details>
+      <details><summary>Can one team handle internet, IT and cameras?</summary><p>Yes. We handle connectivity, system integration, managed support, CCTV and solar, so one team is accountable for the whole setup.</p></details>
+      <details><summary>Do you work with LGUs, schools and other institutions?</summary><p>Yes. Our enterprise services are built for businesses, institutions and government, and DICT Region 3 named us an Outstanding Partner in 2024 and 2025.</p></details>
+      <details><summary>Can we buy materials only?</summary><p>Yes. We supply fiber and networking hardware for your own teams or contractors.</p></details>
+      <details><summary>Can you train our staff?</summary><p>Yes. We run fiber optic training, digital jobs training and cybersecurity awareness sessions.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="index.html" aria-label="Access Network home">
+          <svg viewBox="0 0 56 40" aria-hidden="true"><polygon class="mk-n" points="30,40 30,0 38,0 48,23 48,0 56,0 56,40 48,40 38,17 38,40"/><path class="mk-a" fill-rule="evenodd" d="M0 40 13 0h10l13 40h-9l-2.5-8h-13L9 40zM14 25h8l-4-13z"/></svg>
+          <span class="brand-name"><b>Access Network</b><small>Powered by RA Omega Cable TV Corp.</small></span>
+        </a>
+        <p class="foot-sign">Connection <span class="script">that</span> matters</p>
+        <p>Network, IT and power for organizations in Nueva Ecija, from a women-led local ICT company serving the province since 2011.</p>
+      </div>
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="connectivity.html">Connectivity</a></li>
+          <li><a href="enterprise-it.html">Enterprise IT</a></li>
+          <li><a href="projects.html">Fiber &amp; Solar projects</a></li>
+          <li><a href="quote.html">Request a quote</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Group companies</h4>
+        <ul>
+          <li>RA Omega Cable TV Corporation</li>
+          <li>First Integrated Cable TV Corporation</li>
+          <li>Bunobon Cable TV Corporation</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Business sales</h4>
+        <ul>
+          <li>+63 932 861 0817</li>
+          <li style="overflow-wrap:anywhere">accessnetworkbusdev@gmail.com</li>
+          <li><a href="https://www.facebook.com/accessnetworkinternet" rel="noopener">Facebook: accessnetworkinternet</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-base">
+      <span>&copy; 2026 Access Network, powered by RA Omega Cable TV Corporation</span>
+      <span>Business website mockup &middot; content from the Access Network Company Profile 2026</span>
+    </div>
+  </div>
+</footer>
+<script src="assets/site.js"></script>
+</body>
+</html>
