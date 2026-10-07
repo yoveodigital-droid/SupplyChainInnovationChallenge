@@ -1,7 +1,6 @@
 # Access Network Brand & Style Guide 1.0
 
-- `Access-Network-Brand-and-Style-Guide.pdf`: the guide, 32 pages, A4 landscape, fonts embedded.
-- `brand-guide.html`: the source. Edit it and re-render with Chromium (print to PDF, background graphics on, page size from CSS).
+`Access-Network-Brand-and-Style-Guide.pdf`: 32 pages, A4 landscape, fonts embedded.
 
 Sections: brand foundation, logo, color, typography, graphic elements, voice and messaging, digital components, and applications (stationery, social, presentations, co-branding, pre-publish checklist).
 
