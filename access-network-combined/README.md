@@ -1,24 +1,24 @@
-# Access Network: combined website mockup
+# Access Network × HER Net: combined website prototype
 
-One site that brings together the EU-partner mockup (`../access-network-site/`) and the B2B mockup (`../access-network-b2b/`). A shared corporate home sends each audience to its own landing page, and both audiences share the company pages. Content comes from the *Access Network Company Profile 2026*. The site uses American spelling throughout, the standard in the Philippines.
+Redesigned in the HER Net green scheme (after the HER Net website): dark forest-green hero sections with a dot grid, emerald pill buttons, rounded cards, Outfit headings and Inter text, with light and dark themes. Content follows the Access Network × HER Net Messaging Framework 2.0.
 
-| Page | File | Audience | Purpose |
-|---|---|---|---|
-| Home | `index.html` | Everyone | Brand, two audience entry points, key facts, who we are, service-area map, ICT Forum |
-| Business landing | `business.html` | Business customers | Coverage checker, service lines, industries, delivery process, reasons to buy |
-| Partners landing | `partners.html` | EU institutions, Team Europe, European companies | Digital Economy Package alignment, partnership models, roadmap, track record, enquiry form |
-| About | `about.html` | Shared | Story and milestones, mission and vision, values, collaboration, group companies |
-| Solutions | `solutions.html` | Shared | All five service lines in detail, with anchors: `#connectivity`, `#enterprise-it`, `#fiber`, `#solar`, `#training` |
-| Smart Agriculture | `smart-agriculture.html` | Shared | Focus areas, research ecosystem, field-to-network concept, training, ICT Forum series |
-| Get a quote | `quote.html` | Business customers | Quote and site-survey request form, contact, next steps, FAQ |
-
-An audience bar above the main navigation links to both landing pages from every page.
+| Page | File | Purpose |
+|---|---|---|
+| Home | `index.html` | HER Net story, audience entry points, four message pillars, ecosystem layers, district snapshot, research hubs, upcoming initiatives |
+| Business landing | `business.html` | Coverage checker (six HER Net LGUs), service lines, industries, delivery process |
+| Partners landing | `partners.html` | District context, ecosystem layers, EU Digital Economy Package alignment, partnership models, enquiry form |
+| About | `about.html` | Story, mission and vision, Access Network and HER Net, values, collaboration, group companies |
+| HER Net | `her-net.html` | What HER Net is, Four Pillars of Inclusive Digital Transformation (tabs), ecosystem layers, live dashboard, smart agri, public collaboration, filterable initiatives |
+| District 2 | `district.html` | Nueva Ecija 2nd District profile: key figures, interactive LGU map, LGU table, lowland vs upland, connectivity gap, livelihoods, gap to response |
+| Solutions | `solutions.html` | All five service lines in detail |
+| Get a quote | `quote.html` | Quote and site-survey form, contact, FAQ |
 
 Open `index.html` in a browser. No build step; fonts load from Google Fonts.
 
 ## Before launch
 
-- Items marked with a dashed **Placeholder** chip need real content (plans and pricing, support terms, office hours, project photos).
-- Forms are not connected; submitting shows a notice and sends nothing.
-- The coverage checker is indicative: the five towns named in the profile are treated as the core area.
-- EU package references describe alignment with published priorities, not an agreement; no EU emblem is used.
+- Dashboard figures (trained in ICT, 38+ barangays, 4,200+ farmers and MSME partners) and event dates are samples marked for verification.
+- District barangay total: LGU rows sum to 206; the baseline summary states 221.
+- The district map is schematic; positions are approximate.
+- Replace the logo screenshot (`assets/hernet-logo.jpg`) with the master artwork.
+- Forms are not connected; submitting sends nothing.
